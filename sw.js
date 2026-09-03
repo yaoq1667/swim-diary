@@ -1,5 +1,6 @@
 // 游泳打卡本 - Service Worker（离线缓存）
-var CACHE_NAME = 'swim-diary-v1';
+// 策略：HTML 优先走网络（保证更新即时生效），断网时才用缓存
+var CACHE_NAME = 'swim-diary-v2';
 var CACHE_FILES = [
   'swim-diary.html',
   'manifest.json'
@@ -32,12 +33,31 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-  // 只缓存同源 GET 请求
   if (e.request.method !== 'GET') return;
+  var url = new URL(e.request.url);
+  // HTML 文件：网络优先，断网才用缓存
+  if (url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    e.respondWith(
+      fetch(e.request).then(function(resp) {
+        if (resp && resp.status === 200) {
+          var respClone = resp.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(e.request, respClone);
+          });
+        }
+        return resp;
+      }).catch(function() {
+        return caches.match(e.request).then(function(cached) {
+          return cached || caches.match('swim-diary.html');
+        });
+      })
+    );
+    return;
+  }
+  // 其他文件（manifest.json 等）：缓存优先，后台更新
   e.respondWith(
     caches.match(e.request).then(function(cached) {
       if (cached) {
-        // 有缓存先用缓存，同时后台更新
         fetch(e.request).then(function(resp) {
           caches.open(CACHE_NAME).then(function(cache) {
             cache.put(e.request, resp.clone());
@@ -45,7 +65,6 @@ self.addEventListener('fetch', function(e) {
         }).catch(function() {});
         return cached;
       }
-      // 没缓存就请求，请求成功后存入缓存
       return fetch(e.request).then(function(resp) {
         if (resp && resp.status === 200) {
           var respClone = resp.clone();
@@ -55,7 +74,6 @@ self.addEventListener('fetch', function(e) {
         }
         return resp;
       }).catch(function() {
-        // 离线且没缓存，返回主页
         return caches.match('swim-diary.html');
       });
     })
