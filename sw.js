@@ -19,6 +19,7 @@ self.addEventListener('install', function(e) {
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(names) {
+      // 删除所有旧缓存（包括 v1 和任何旧版本）
       return Promise.all(
         names.filter(function(name) {
           return name !== CACHE_NAME;
@@ -27,9 +28,17 @@ self.addEventListener('activate', function(e) {
         })
       );
     }).then(function() {
+      // 立即接管所有页面，不等下一次刷新
       return self.clients.claim();
     })
   );
+});
+
+// 监听消息：收到 update 命令立即跳过等待
+self.addEventListener('message', function(e) {
+  if (e.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', function(e) {

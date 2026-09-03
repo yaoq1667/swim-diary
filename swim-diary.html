@@ -862,9 +862,30 @@ var _d=new Date();
 $('filter-month').value=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0');
 renderAll();
 
-/* 注册 Service Worker（离线缓存） */
+/* 注册 Service Worker（离线缓存 + 自动更新） */
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(function(){});
+  navigator.serviceWorker.register('sw.js').then(function(reg){
+    // 检测到新版本立即接管
+    reg.addEventListener('updatefound', function(){
+      var newWorker = reg.installing;
+      if(newWorker){
+        newWorker.addEventListener('statechange', function(){
+          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+            // 新版本已就绪，通知它立即接管
+            newWorker.postMessage('skipWaiting');
+          }
+        });
+      }
+    });
+  }).catch(function(){});
+  // controller 变化后自动刷新一次
+  var refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(!refreshing){
+      refreshing = true;
+      window.location.reload();
+    }
+  });
 }
 </script>
 </body>
