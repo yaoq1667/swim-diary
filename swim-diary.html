@@ -55,8 +55,6 @@
   .field{min-width:0}
   .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
   .field input,.field select{width:100%;height:44px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:15px;background:#fbfdfe;color:var(--text);outline:none;transition:.15s;box-sizing:border-box;-webkit-appearance:none;appearance:none}
-  .field input[type=date]{-webkit-appearance:textfield;appearance:textfield}
-  .field input[type=date]::-webkit-inner-spin-button,.field input[type=date]::-webkit-calendar-picker-indicator{display:block}
   .field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
   .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
   .chip{padding:5px 12px;border:1px solid var(--border);border-radius:999px;background:#f8fafc;font-size:13px;color:var(--deep);cursor:pointer;transition:.15s}
@@ -156,7 +154,9 @@
     .panel{padding:14px 16px}
     .form-grid{grid-template-columns:1fr;gap:10px;align-items:start}
     .form-2col{grid-template-columns:1fr 1fr}
-    .field input,.field select{font-size:16px;padding:10px 10px}
+    .field input,.field select{font-size:16px;padding:10px 10px;height:44px}
+    .field input[type=date]{height:44px;line-height:44px;-webkit-appearance:none;appearance:none;background:#fbfdfe;border:1px solid var(--border);border-radius:9px;color:var(--text);text-align:left}
+    .field input[type=date]::-webkit-date-and-time-value{text-align:left}
     .field label{font-size:12px}
     .chip{padding:4px 10px;font-size:12px}
     .table{font-size:12px}
@@ -230,7 +230,7 @@
         <h3>本次游泳 <span class="hint">泳池长度可在「我的」中修改</span></h3>
         <div class="field">
           <label>日期</label>
-          <input type="date" id="rec-date">
+          <input type="date" id="rec-date" style="min-height:44px" onfocus="this.style.color='#0f172a'">
         </div>
         <div class="field" style="margin-top:14px">
           <label>时长（分钟）</label>
