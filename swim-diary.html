@@ -67,7 +67,10 @@
   .btn-danger{background:#fee2e2;color:#b91c1c}
   .btn-danger:hover{background:#fecaca}
   .btn-sm{padding:6px 12px;font-size:13px;border-radius:8px}
-  .form-actions{margin-top:16px;display:flex;gap:10px;align-items:center}
+  .form-actions{margin-top:16px;display:flex;gap:10px;align-items:center;justify-content:center}
+  .form-actions .btn{width:100%}
+  .form-2col{grid-template-columns:1fr 1fr}
+  .preview-box{padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px;background:#f1f5f9;color:var(--muted);min-height:42px;display:flex;align-items:center}
   .tip{font-size:13px;color:var(--muted);margin-top:10px}
   .tip b{color:var(--primary-dark)}
   /* ===== 日历 ===== */
@@ -149,7 +152,8 @@
     .card{padding:12px 14px}
     .card .value{font-size:22px}
     .panel{padding:14px 16px}
-    .form-grid{grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+    .form-grid{grid-template-columns:1fr;gap:10px;align-items:start}
+    .form-2col{grid-template-columns:1fr 1fr}
     .field input,.field select{font-size:16px;padding:10px 10px}
     .field label{font-size:12px}
     .chip{padding:4px 10px;font-size:12px}
@@ -222,25 +226,27 @@
       <div class="page-sub">游完填一下，几秒钟的事，数据自动换算成距离和速度</div>
       <div class="panel">
         <h3>本次游泳 <span class="hint">泳池长度可在「我的」中修改</span></h3>
-        <div class="form-grid">
+        <div class="form-grid form-2col">
           <div class="field">
             <label>日期</label>
             <input type="date" id="rec-date">
           </div>
           <div class="field">
-            <label>圈数（趟）</label>
-            <input type="number" id="rec-laps" min="1" step="1" placeholder="如 20">
-            <div class="chip-row">
-              <span class="chip" data-laps="10">10 圈</span>
-              <span class="chip" data-laps="20">20 圈</span>
-              <span class="chip" data-laps="30">30 圈</span>
-              <span class="chip" data-laps="40">40 圈</span>
-            </div>
-          </div>
-          <div class="field">
             <label>时长（分钟）</label>
             <input type="number" id="rec-time" min="1" step="1" placeholder="如 40">
           </div>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label>圈数（趟）</label>
+          <input type="number" id="rec-laps" min="1" step="1" placeholder="如 20">
+          <div class="chip-row">
+            <span class="chip" data-laps="10">10 圈</span>
+            <span class="chip" data-laps="20">20 圈</span>
+            <span class="chip" data-laps="30">30 圈</span>
+            <span class="chip" data-laps="40">40 圈</span>
+          </div>
+        </div>
+        <div class="form-grid form-2col" style="margin-top:14px">
           <div class="field">
             <label>泳姿（可选）</label>
             <select id="rec-style">
@@ -252,16 +258,17 @@
               <option>混合</option>
             </select>
           </div>
-        </div>
-        <div class="form-grid" style="margin-top:14px">
-          <div class="field">
-            <label>游泳心得（可选，会沉淀成你的游泳日志）</label>
-            <input type="text" id="rec-note" placeholder="如：今天状态不错，配速有提升……">
+          <div class="field" id="rec-preview-wrap">
+            <label>距离换算</label>
+            <div class="preview-box" id="rec-preview">填入圈数后自动计算</div>
           </div>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label>游泳心得（可选，会沉淀成你的游泳日志）</label>
+          <input type="text" id="rec-note" placeholder="如：今天状态不错，配速有提升……">
         </div>
         <div class="form-actions">
           <button class="btn btn-primary" id="btn-save">🏊 保存本次打卡</button>
-          <span class="tip" id="rec-preview"></span>
         </div>
       </div>
     </section>
@@ -818,7 +825,7 @@ $('rec-laps').addEventListener('input',updatePreview);
 $('rec-time').addEventListener('input',updatePreview);
 function updatePreview(){
   const laps=+$('rec-laps').value||0, time=+$('rec-time').value||0;
-  if(!laps&&!time){ $('rec-preview').textContent=''; return; }
+  if(!laps&&!time){ $('rec-preview').textContent='填入圈数后自动计算'; return; }
   const d=dist(laps);
   let s='本次约 '+d+' 米';
   if(time&&laps) s+='，配速约 '+fmtPace(time,d)+' /公里';
