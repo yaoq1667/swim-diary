@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="游泳打卡">
+<meta name="theme-color" content="#0c4a6e">
+<meta name="format-detection" content="telephone=no">
+<title>游泳打卡本</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --primary:#0ea5e9; --primary-dark:#0284c7; --primary-light:#e0f2fe;
+    --deep:#0c4a6e; --bg:#f0f7fc; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+    --border:#e2e8f0; --green:#10b981; --orange:#f59e0b; --red:#ef4444;
+    --radius:14px; --shadow:0 1px 3px rgba(2,132,199,.08),0 8px 24px rgba(2,132,199,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);}
+  .app{display:flex;height:100vh}
+  /* ===== 侧边栏 ===== */
+  .sidebar{width:200px;background:linear-gradient(180deg,#0c4a6e,#0e7490);color:#fff;display:flex;flex-direction:column;flex-shrink:0}
+  .logo{display:flex;align-items:center;gap:10px;padding:22px 20px 16px;font-size:19px;font-weight:700;letter-spacing:1px}
+  .logo .icon{font-size:26px}
+  .nav{flex:1;padding:8px}
+  .nav button{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;margin-bottom:4px;border:none;background:transparent;color:rgba(255,255,255,.82);font-size:15px;border-radius:10px;cursor:pointer;text-align:left;transition:.15s}
+  .nav button:hover{background:rgba(255,255,255,.12)}
+  .nav button.active{background:#ffffff;color:var(--deep);font-weight:600}
+  .nav button .ic{font-size:17px;width:22px;text-align:center}
+  .sidebar-foot{padding:14px 20px;font-size:12px;color:rgba(255,255,255,.55)}
+  /* ===== 主内容 ===== */
+  .main{flex:1;overflow-y:auto;padding:26px 34px 40px}
+  .page{display:none}
+  .page.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .page-title{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--deep)}
+  .page-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+  .card .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .card .value{font-size:26px;font-weight:700;color:var(--deep)}
+  .card .value small{font-size:14px;font-weight:500;color:var(--muted)}
+  .card .sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .card.accent{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff;border:none}
+  .card.accent .label,.card.accent .value small,.card.accent .sub{color:rgba(255,255,255,.85)}
+  .card.accent .value{color:#fff}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:18px}
+  .panel h3{font-size:15px;color:var(--deep);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .panel h3 .hint{font-size:12px;font-weight:400;color:var(--muted)}
+  /* ===== 记录表单 ===== */
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:15px;background:#fbfdfe;color:var(--text);outline:none;transition:.15s}
+  .field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .chip{padding:5px 12px;border:1px solid var(--border);border-radius:999px;background:#f8fafc;font-size:13px;color:var(--deep);cursor:pointer;transition:.15s}
+  .chip:hover{border-color:var(--primary);color:var(--primary)}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;box-shadow:0 4px 12px rgba(14,165,233,.3)}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{background:#f1f5f9;color:var(--deep)}
+  .btn-ghost:hover{background:#e2e8f0}
+  .btn-danger{background:#fee2e2;color:#b91c1c}
+  .btn-danger:hover{background:#fecaca}
+  .btn-sm{padding:6px 12px;font-size:13px;border-radius:8px}
+  .form-actions{margin-top:16px;display:flex;gap:10px;align-items:center}
+  .tip{font-size:13px;color:var(--muted);margin-top:10px}
+  .tip b{color:var(--primary-dark)}
+  /* ===== 日历 ===== */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cal-head{font-size:12px;color:var(--muted);text-align:center;padding-bottom:4px;font-weight:600}
+  .cal-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:.15s;border:1px solid var(--border);background:#f8fafc;color:var(--muted);position:relative}
+  .cal-cell:hover{border-color:var(--primary);transform:scale(1.06)}
+  .cal-cell.has{background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border-color:transparent;font-weight:600}
+  .cal-cell.has .cal-dist{font-size:10px;opacity:.9;margin-top:1px}
+  .cal-cell.today{outline:2px solid var(--deep);outline-offset:1px}
+  .cal-cell.empty{visibility:hidden}
+  /* 周打卡条 */
+  .cal-strip{display:flex;gap:8px}
+  .cal-strip-cell{flex:1;min-height:78px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.15s;border:1px solid var(--border);background:#f8fafc;padding:6px 2px}
+  .cal-strip-cell:hover{border-color:var(--primary);transform:scale(1.04)}
+  .cal-strip-cell.has{background:linear-gradient(135deg,#0ea5e9,#0284c7);border-color:transparent}
+  .cal-strip-cell .cal-wd{font-size:11px;color:var(--muted)}
+  .cal-strip-cell.has .cal-wd{color:rgba(255,255,255,.75)}
+  .cal-strip-cell .cal-d{font-size:13px;font-weight:600;color:var(--deep);margin-top:2px}
+  .cal-strip-cell.has .cal-d{color:#fff}
+  .cal-strip-cell .cal-dist{font-size:12px;font-weight:600;margin-top:3px}
+  .cal-strip-cell.has .cal-dist{color:#fff}
+  .cal-strip-cell .cal-no{font-size:11px;color:var(--muted);margin-top:3px}
+  /* 热力图 */
+  .heat-grid{display:flex;gap:8px;flex-wrap:wrap}
+  .heat-cell{width:62px;height:62px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.15s;border:1px solid var(--border);background:#f8fafc;font-size:12px;color:var(--muted)}
+  .heat-cell:hover{transform:scale(1.08);border-color:var(--primary)}
+  .heat-cell.has{color:#fff;border-color:transparent}
+  .heat-cell .heat-label{font-size:11px;font-weight:600}
+  .heat-cell .heat-val{font-size:11px;margin-top:2px}
+  .no-data{color:var(--muted);font-size:13px;text-align:center;padding:40px 0}
+  /* ===== 历史表格 ===== */
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar input,.toolbar select{padding:8px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px;background:#fff}
+  .table{width:100%;border-collapse:collapse}
+  .table th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:2px solid var(--border);background:#f8fafc}
+  .table td{padding:10px;border-bottom:1px solid var(--border);font-size:14px}
+  .table tr:hover td{background:#f8fafc}
+  .tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:var(--primary-light);color:var(--primary-dark)}
+  .row-actions button{background:none;border:none;cursor:pointer;font-size:13px;margin-right:8px;padding:4px 6px;border-radius:6px}
+  .row-actions .edit{color:var(--primary-dark)}.row-actions .edit:hover{background:var(--primary-light)}
+  .row-actions .del{color:var(--red)}.row-actions .del:hover{background:#fee2e2}
+  /* ===== 我的 ===== */
+  .setting-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .setting-row:last-child{border-bottom:none}
+  .setting-row .st{font-size:14px}
+  .setting-row .st small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+  .setting-row input[type=number]{width:100px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+  .goal-tag{display:inline-block;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:999px;padding:2px 10px;font-size:12px;margin-right:6px}
+  .goal-tag.done{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+  .steps{font-size:14px;line-height:1.9;color:#334155}
+  .steps b{color:var(--primary-dark)}
+  .danger-zone{margin-top:8px}
+  .badge{display:inline-block;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-size:12px;color:var(--muted);margin-left:8px}
+  /* ===== 弹窗 ===== */
+  .modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal-mask.show{display:flex}
+  .modal{background:#fff;border-radius:16px;padding:22px 24px;width:420px;max-width:92vw;box-shadow:0 20px 50px rgba(2,132,199,.25)}
+  .modal h4{font-size:16px;margin-bottom:14px;color:var(--deep)}
+  .modal .form-grid{margin-bottom:16px}
+  .modal .tip{font-size:12px;margin-top:-6px;margin-bottom:12px}
+  .toast{position:fixed;top:22px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--deep);color:#fff;padding:10px 22px;border-radius:999px;font-size:14px;box-shadow:0 8px 24px rgba(2,132,199,.35);transition:.3s;z-index:99;opacity:0}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  /* ===== 手机端适配 ===== */
+  @media(max-width:760px){
+    .app{flex-direction:column;height:100vh;height:100dvh}
+    .sidebar{width:100%;flex-direction:row;align-items:center;padding:0 6px;flex-shrink:0;min-height:56px;order:2;border-top:1px solid rgba(255,255,255,.1)}
+    .sidebar .logo{display:none}
+    .sidebar .nav{flex:1;flex-direction:row;display:flex;padding:0;justify-content:space-around}
+    .sidebar .nav button{flex-direction:column;gap:2px;padding:6px 4px;margin:0;border-radius:10px;font-size:10px;text-align:center}
+    .sidebar .nav button .ic{font-size:20px;width:auto}
+    .sidebar .nav button .tx{font-size:10px}
+    .sidebar .version-foot{display:none}
+    .main{flex:1;order:1;padding:14px 14px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .page-title{font-size:19px}
+    .page-sub{font-size:12px}
+    .cards{grid-template-columns:repeat(2,1fr);gap:10px}
+    .card{padding:12px 14px}
+    .card .value{font-size:22px}
+    .panel{padding:14px 16px}
+    .form-grid{grid-template-columns:1fr 1fr;gap:10px}
+    .field input,.field select{font-size:16px;padding:10px 10px}
+    .table{font-size:12px}
+    .table th,.table td{padding:6px 5px}
+    .heat-cell{width:48px;height:48px;font-size:11px}
+    .heat-cell .heat-label{font-size:10px}
+    .heat-cell .heat-val{font-size:10px}
+    .cal-strip-cell{min-height:64px}
+    .cal-cell{font-size:12px}
+    .modal{width:94vw;padding:16px 18px}
+    .modal .form-grid{grid-template-columns:1fr 1fr}
+    .form-actions{flex-wrap:wrap}
+    .btn{padding:10px 16px;font-size:14px}
+    .steps{font-size:13px}
+    .setting-row{flex-direction:row;flex-wrap:wrap}
+    .setting-row input[type=number]{width:80px}
+    safe-area-inset{padding-bottom:env(safe-area-inset-bottom)}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="logo"><span class="icon">🏊</span><span class="txt">游泳打卡本</span></div>
+    <nav class="nav">
+      <button class="active" data-page="overview"><span class="ic">📊</span><span class="tx">概览</span></button>
+      <button data-page="record"><span class="ic">📝</span><span class="tx">记录打卡</span></button>
+      <button data-page="history"><span class="ic">🗓️</span><span class="tx">历史记录</span></button>
+      <button data-page="trend"><span class="ic">📈</span><span class="tx">趋势分析</span></button>
+      <button data-page="settings"><span class="ic">⚙️</span><span class="tx">我的</span></button>
+    </nav>
+    <div class="version-foot">本地存储 · 数据不上传</div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+
+    <!-- 概览 -->
+    <section class="page active" id="page-overview">
+      <div class="page-title">概览</div>
+      <div class="page-sub" id="ov-subtitle"></div>
+      <div class="cards">
+        <div class="card accent">
+          <div class="label">本周游泳</div>
+          <div class="value" id="ov-week-count">0<small> 次</small></div>
+          <div class="sub" id="ov-week-label"></div>
+        </div>
+        <div class="card"><div class="label">本周距离</div><div class="value" id="ov-week-dist">0<small> m</small></div><div class="sub" id="ov-week-dist-sub"></div></div>
+        <div class="card"><div class="label">本周时长</div><div class="value" id="ov-week-time">0<small> min</small></div><div class="sub">共 <span id="ov-week-h">0</span> 小时</div></div>
+        <div class="card"><div class="label">本月次数</div><div class="value" id="ov-month">0<small> 次</small></div><div class="sub" id="ov-month-dist"></div></div>
+      </div>
+
+      <div class="panel">
+        <h3>近 7 天打卡 <span class="hint">点击日期可查看当日明细</span></h3>
+        <div class="cal-strip" id="cal-week"></div>
+      </div>
+
+      <div class="panel">
+        <h3 id="cal-month-title">本月打卡日历</h3>
+        <div class="cal-grid" id="cal-month"></div>
+      </div>
+    </section>
+
+    <!-- 记录 -->
+    <section class="page" id="page-record">
+      <div class="page-title">记录打卡</div>
+      <div class="page-sub">游完填一下，几秒钟的事，数据自动换算成距离和速度</div>
+      <div class="panel">
+        <h3>本次游泳 <span class="hint">泳池长度可在「我的」中修改</span></h3>
+        <div class="form-grid">
+          <div class="field">
+            <label>日期</label>
+            <input type="date" id="rec-date">
+          </div>
+          <div class="field">
+            <label>圈数（趟）</label>
+            <input type="number" id="rec-laps" min="1" step="1" placeholder="如 20">
+            <div class="chip-row">
+              <span class="chip" data-laps="10">10 圈</span>
+              <span class="chip" data-laps="20">20 圈</span>
+              <span class="chip" data-laps="30">30 圈</span>
+              <span class="chip" data-laps="40">40 圈</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>时长（分钟）</label>
+            <input type="number" id="rec-time" min="1" step="1" placeholder="如 40">
+          </div>
+          <div class="field">
+            <label>泳姿（可选）</label>
+            <select id="rec-style">
+              <option value="">未记录</option>
+              <option>自由泳</option>
+              <option>蛙泳</option>
+              <option>仰泳</option>
+              <option>蝶泳</option>
+              <option>混合</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field">
+            <label>游泳心得（可选，会沉淀成你的游泳日志）</label>
+            <input type="text" id="rec-note" placeholder="如：今天状态不错，配速有提升……">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-save">🏊 保存本次打卡</button>
+          <span class="tip" id="rec-preview"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 历史 -->
+    <section class="page" id="page-history">
+      <div class="page-title">历史记录</div>
+      <div class="page-sub" id="hist-sub"></div>
+      <div class="panel">
+        <div class="toolbar">
+          <input type="month" id="filter-month">
+          <button class="btn btn-ghost btn-sm" id="filter-clear">清除筛选</button>
+          <span style="flex:1"></span>
+          <span class="badge" id="hist-count"></span>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>日期</th><th>圈数</th><th>距离</th><th>时长</th><th>配速</th><th>泳姿</th><th>心得</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+        <div class="no-data" id="history-empty" style="display:none">暂无记录，去「记录打卡」添加第一笔吧 🏊</div>
+      </div>
+    </section>
+
+    <!-- 趋势 -->
+    <section class="page" id="page-trend">
+      <div class="page-title">趋势分析</div>
+      <div class="page-sub">看看自己最近的坚持程度</div>
+      <div class="cards">
+        <div class="card"><div class="label">累计打卡</div><div class="value" id="tr-total">0<small> 次</small></div><div class="sub">自开始记录以来</div></div>
+        <div class="card"><div class="label">累计距离</div><div class="value" id="tr-total-dist">0<small> m</small></div><div class="sub" id="tr-total-km"></div></div>
+        <div class="card"><div class="label">累计时长</div><div class="value" id="tr-total-time">0<small> min</small></div><div class="sub" id="tr-total-h"></div></div>
+        <div class="card"><div class="label">平均每次</div><div class="value" id="tr-avg">0<small> m</small></div><div class="sub" id="tr-avg-time"></div></div>
+      </div>
+      <div class="panel">
+        <h3>近 14 天每日打卡 <span class="hint" id="hint-14day">颜色越深游得越多，点击可看明细</span></h3>
+        <div class="heat-grid" id="cal-14day"></div>
+      </div>
+      <div class="panel">
+        <h3>近 4 周每周打卡 <span class="hint" id="hint-4w">周一起算</span></h3>
+        <div class="heat-grid" id="cal-4w"></div>
+      </div>
+      <div class="panel">
+        <h3>近 3 个月月度统计 <span class="hint" id="hint-3month">点击可跳转当月历史记录</span></h3>
+        <div class="heat-grid" id="cal-3month"></div>
+      </div>
+      <div class="panel">
+        <h3>最佳状态</h3>
+        <div class="cards" style="margin-bottom:0">
+          <div class="card"><div class="label">单次最长距离</div><div class="value" id="tr-best-dist">-</div><div class="sub" id="tr-best-dist-date"></div></div>
+          <div class="card"><div class="label">单次最快配速</div><div class="value" id="tr-best-pace">-</div><div class="sub">分钟 / 公里</div></div>
+          <div class="card"><div class="label">月打卡最高</div><div class="value" id="tr-best-month">-</div><div class="sub" id="tr-best-month-sub"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 我的 -->
+    <section class="page" id="page-settings">
+      <div class="page-title">我的</div>
+      <div class="page-sub">个性化设置与数据管理，全部存在本机浏览器</div>
+
+      <div class="panel">
+        <h3>泳池与目标</h3>
+        <div class="setting-row">
+          <div class="st">泳池单趟长度<small>用于自动换算距离</small></div>
+          <input type="number" id="set-pool" min="10" max="100" step="1"> 米
+        </div>
+        <div class="setting-row">
+          <div class="st">每周目标次数<small>达到后概览会显示达标</small></div>
+          <input type="number" id="set-goal" min="1" max="14" step="1"> 次 / 周
+        </div>
+        <div class="setting-row">
+          <div class="st">每月目标次数<small>用于月目标统计</small></div>
+          <input type="number" id="set-goal-m" min="1" max="31" step="1"> 次 / 月
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>数据备份与迁移</h3>
+        <div class="setting-row">
+          <div class="st">导出全部数据<small>生成 JSON 文件，可留存或换电脑导入</small></div>
+          <button class="btn btn-ghost btn-sm" id="btn-export">⬇ 导出</button>
+        </div>
+        <div class="setting-row">
+          <div class="st">导入数据<small>从 JSON 备份恢复，会替换当前全部数据</small></div>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆ 选择文件<input type="file" id="btn-import" accept=".json,application/json" style="display:none"></label>
+        </div>
+        <div class="setting-row">
+          <div class="st">清空全部数据<small>不可恢复，谨慎操作</small></div>
+          <button class="btn btn-danger btn-sm" id="btn-clear">🗑 清空</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>使用说明</h3>
+        <div class="steps">
+          1. 打开「记录打卡」，填圈数和时长，可选写心得，点保存；<br>
+          2. 在「概览」看本周、本月数据，近 7 天打卡一目了然；<br>
+          3. 在「历史记录」随时回看或修改每条记录；<br>
+          4. 在「趋势分析」看月度/周度趋势与最佳状态；<br>
+          5. 换电脑前用「导出」备份，新电脑「导入」即可恢复。<br>
+          数据只保存在<b>本机浏览器</b>中，不上传任何服务器。
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal-mask" id="edit-mask">
+  <div class="modal">
+    <h3 id="edit-title">编辑记录</h3>
+    <div class="form-grid">
+      <div class="field"><label>日期</label><input type="date" id="edit-date"></div>
+      <div class="field"><label>圈数</label><input type="number" id="edit-laps" min="1" step="1"></div>
+      <div class="field"><label>时长(分钟)</label><input type="number" id="edit-time" min="1" step="1"></div>
+      <div class="field"><label>泳姿</label><select id="edit-style"><option value="">未记录</option><option>自由泳</option><option>蛙泳</option><option>仰泳</option><option>蝶泳</option><option>混合</option></select></div>
+    </div>
+    <div class="field" style="margin-top:14px"><label>心得</label><input type="text" id="edit-note" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+      <button class="btn btn-ghost btn-sm" id="edit-cancel">取消</button>
+      <button class="btn btn-primary btn-sm" id="edit-save">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 数据层 ================= */
+const LS_KEY='swim_diary_v1';
+const DEFAULTS={records:[],poolLength:25,weeklyGoal:2,monthlyGoal:8};
+let DB=load();
+
+function load(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      const obj=JSON.parse(raw);
+      return {records:Array.isArray(obj.records)?obj.records:[],poolLength:obj.poolLength||25,weeklyGoal:obj.weeklyGoal||2,monthlyGoal:obj.monthlyGoal||8};
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULTS));
+}
+function save(){ try{ localStorage.setItem(LS_KEY,JSON.stringify(DB)); }catch(e){ toast('存储失败，浏览器存储空间可能已满'); } }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function todayStr(){ const d=new Date(); return fmtDate(d); }
+function fmtDate(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return y+'-'+m+'-'+dd; }
+function parseDate(s){ const p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function fmtCN(s){
+  if(s instanceof Date){ return (s.getMonth()+1)+'月'+s.getDate()+'日'; }
+  const p=String(s).split('-'); return +p[1]+'月'+ +p[2]+'日';
+}
+function fmtCNFull(s){
+  if(s instanceof Date){ return s.getFullYear()+'年'+(s.getMonth()+1)+'月'+s.getDate()+'日'; }
+  const p=String(s).split('-'); return p[0]+'年'+ +p[1]+'月'+ +p[2]+'日';
+}
+function dist(laps){ return laps*DB.poolLength; }
+function pace(min,dist){ return dist>0 ? (min/dist*1000) : 0; }
+function fmtPace(min,dist){ const v=pace(min,dist); if(!v) return '—'; const mm=Math.floor(v),ss=Math.round((v-mm)*60); return mm+"′"+String(ss).padStart(2,'0')+"″"; }
+function weekRangeStr(d){
+  const day=(d.getDay()+6)%7; // 周一=0
+  const mon=new Date(d); mon.setDate(d.getDate()-day);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  return fmtCN(mon)+' ~ '+fmtCN(sun);
+}
+function startOfWeek(d){ const day=(d.getDay()+6)%7; const m=new Date(d); m.setDate(d.getDate()-day); m.setHours(0,0,0,0); return m; }
+function fmtKm(m){ if(m>=1000){ const k=m/1000; return (k%1===0? k.toFixed(0):k.toFixed(1))+' 公里'; } return m+' 米'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ================= 导航 ================= */
+const $=id=>document.getElementById(id);
+let curPage='overview';
+document.querySelectorAll('.nav button').forEach(b=>{
+  b.addEventListener('click',()=>switchPage(b.dataset.page));
+});
+function switchPage(p){
+  curPage=p;
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));
+  document.querySelectorAll('.page').forEach(s=>s.classList.toggle('active',s.id==='page-'+p));
+  renderAll();
+  if(p==='overview') window.scrollTo({top:0});
+}
+
+/* ================= 渲染 ================= */
+function renderAll(){
+  renderOverview();
+  renderHistory();
+  renderTrend();
+  renderSettings();
+}
+function recordsOfDay(dateStr){
+  return DB.records.filter(r=>r.date===dateStr).reduce((a,r)=>({laps:a.laps+r.laps,min:a.min+r.time,dist:a.dist+dist(r.laps)}),{laps:0,min:0,dist:0});
+}
+
+/* ---- 概览 ---- */
+function renderOverview(){
+  const now=new Date();
+  const sw=startOfWeek(now);
+  const wk=DB.records.filter(r=>{const d=parseDate(r.date);return d>=sw && d<=now;});
+  const wkLaps=wk.reduce((a,r)=>a+r.laps,0), wkMin=wk.reduce((a,r)=>a+r.time,0);
+  const wkDist=dist(wkLaps);
+  const mStart=new Date(now.getFullYear(),now.getMonth(),1);
+  const mo=DB.records.filter(r=>{const d=parseDate(r.date);return d>=mStart && d<=now;});
+  const moDist=dist(mo.reduce((a,r)=>a+r.laps,0));
+
+  $('ov-subtitle').textContent='今天是 '+fmtCNFull(todayStr())+'，本周：'+weekRangeStr(now);
+  $('ov-week-count').innerHTML=wk.length+'<small> 次</small>';
+  $('ov-week-label').textContent= wk.length>=DB.weeklyGoal ? '✓ 已达成每周 '+DB.weeklyGoal+' 次目标' : '距离目标还差 '+(DB.weeklyGoal-wk.length)+' 次';
+  $('ov-week-dist').innerHTML=wkDist+'<small> m</small>';
+  $('ov-week-dist-sub').textContent='约 '+fmtKm(wkDist);
+  $('ov-week-time').innerHTML=wkMin+'<small> min</small>';
+  $('ov-week-h').textContent=(wkMin/60).toFixed(1);
+  $('ov-month').innerHTML=mo.length+'<small> 次</small>';
+  $('ov-month-dist').textContent='本月累计 '+moDist+' m（约 '+fmtKm(moDist)+'）';
+  renderWeekChart();
+  renderMonthCalendar();
+}
+
+/* 近7天打卡条 */
+function renderWeekChart(){
+  const box=$('cal-week');
+  const now=new Date(); box.innerHTML='';
+  const wd=['一','二','三','四','五','六','日'];
+  const today=fmtDate(now);
+  for(let i=6;i>=0;i--){
+    const d=new Date(now); d.setDate(now.getDate()-i);
+    const s=fmtDate(d); const rec=recordsOfDay(s);
+    const cell=document.createElement('div'); cell.className='cal-strip-cell'+(rec.dist>0?' has':'');
+    const dow=(d.getDay()+6)%7;
+    let html='<span class="cal-wd">周'+wd[dow]+'</span>';
+    html+='<span class="cal-d">'+d.getDate()+'</span>';
+    if(rec.dist>0){
+      html+='<span class="cal-dist">'+(rec.dist>=1000?(rec.dist/1000).toFixed(1)+'k':rec.dist)+'m</span>';
+    }else{
+      html+='<span class="cal-no">—</span>';
+    }
+    cell.innerHTML=html;
+    if(s===today) cell.style.outline='2px solid var(--deep)';
+    cell.addEventListener('click',()=>showDayDetail(s));
+    box.appendChild(cell);
+  }
+}
+
+/* 点击日期查看当日明细 */
+function showDayDetail(dateStr){
+  const recs=DB.records.filter(r=>r.date===dateStr);
+  const total=recordsOfDay(dateStr);
+  let html='';
+  if(recs.length===0){
+    html='<p class="no-data">这一天没有打卡记录</p>';
+  }else{
+    html='<table class="table"><thead><tr><th>圈数</th><th>距离</th><th>时长</th><th>配速</th><th>泳姿</th><th>心得</th></tr></thead><tbody>';
+    recs.forEach(r=>{
+      const d=dist(r.laps);
+      html+='<tr><td>'+r.laps+' 圈</td><td>'+d+' m</td><td>'+r.time+' min</td><td>'+fmtPace(r.time,d)+'</td><td>'+(r.style||'—')+'</td><td>'+(r.note||'')+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+  const mask=document.createElement('div'); mask.className='modal-mask show';
+  const modal=document.createElement('div'); modal.className='modal';
+  modal.innerHTML='<h4>'+fmtCNFull(dateStr)+' 打卡明细</h4><div style="margin:6px 0 10px;color:var(--muted);font-size:13px">当日共 '+total.laps+' 圈 · '+total.dist+' 米 · '+total.min+' 分钟</div>'+html+'<div style="text-align:right;margin-top:14px"><button class="btn btn-ghost btn-sm" id="day-close">关闭</button></div>';
+  mask.appendChild(modal);
+  modal.querySelector('#day-close').addEventListener('click',()=>mask.remove());
+  mask.addEventListener('click',e=>{ if(e.target===mask) mask.remove(); });
+  document.body.appendChild(mask);
+}
+
+/* 本月日历网格 */
+function renderMonthCalendar(){
+  const box=$('cal-month');
+  const now=new Date();
+  const y=now.getFullYear(), m=now.getMonth();
+  const today=fmtDate(now);
+  // 日历标题
+  const title=$('cal-month-title');
+  if(title) title.textContent=(m+1)+'月打卡日历';
+  // 表头
+  box.innerHTML='';
+  ['一','二','三','四','五','六','日'].forEach(w=>{
+    const h=document.createElement('div'); h.className='cal-head'; h.textContent=w; box.appendChild(h);
+  });
+  // 第一天周几（周一开始）
+  const firstDay=new Date(y,m,1);
+  const firstDow=(firstDay.getDay()+6)%7;
+  // 空白格
+  for(let i=0;i<firstDow;i++){
+    const e=document.createElement('div'); e.className='cal-cell empty'; box.appendChild(e);
+  }
+  // 当月天数
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  for(let dd=1;dd<=daysInMonth;dd++){
+    const s=fmtDate(new Date(y,m,dd));
+    const rec=recordsOfDay(s);
+    const cell=document.createElement('div');
+    cell.className='cal-cell'+(rec.dist>0?' has':'')+(s===today?' today':'');
+    let html='<span>'+dd+'</span>';
+    if(rec.dist>0){
+      html+='<span class="cal-dist">'+(rec.dist>=1000?(rec.dist/1000).toFixed(1)+'k':rec.dist)+'m</span>';
+    }
+    cell.innerHTML=html;
+    cell.title=s+(rec.dist>0?' · '+rec.dist+'m':'');
+    cell.addEventListener('click',()=>showDayDetail(s));
+    box.appendChild(cell);
+  }
+}
+
+/* ---- 历史记录 ---- */
+let histFilter='';
+function renderHistory(){
+  const filter=$('filter-month').value;
+  const list=DB.records.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const filtered=filter? list.filter(r=>r.date.startsWith(filter)) : list;
+  const body=$('history-body'); body.innerHTML='';
+  $('hist-count').textContent=filter? (filtered.length+' / '+list.length+' 条') : (list.length+' 条');
+  $('hist-sub').textContent= filter? '筛选月份：'+filter : '全部 '+list.length+' 条记录，按日期倒序';
+  if(!filtered.length){ $('history-empty').style.display='block'; return; }
+  $('history-empty').style.display='none';
+  filtered.forEach(r=>{
+    const tr=document.createElement('tr');
+    const d=dist(r.laps), p=fmtPace(r.time,d);
+    tr.innerHTML='<td>'+esc(r.date)+'</td><td>'+r.laps+' 圈</td><td>'+d+' m</td><td>'+r.time+' min</td><td>'+p+'</td><td>'+(r.style?esc(r.style):'<span class="muted">—</span>')+'</td><td class="muted">'+(r.note?esc(r.note):'')+'</td>';
+    const td=document.createElement('td'); td.className='row-actions';
+    td.innerHTML='<button class="edit" data-id="'+r.id+'">编辑</button><button class="del" data-id="'+r.id+'">删除</button>';
+    tr.appendChild(td);
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('.edit').forEach(b=>b.addEventListener('click',()=>openEdit(b.dataset.id)));
+  body.querySelectorAll('.del').forEach(b=>b.addEventListener('click',()=>delRecord(b.dataset.id)));
+}
+function delRecord(id){
+  const r=DB.records.find(x=>x.id===id); if(!r)return;
+  if(!confirm('确定删除 '+r.date+' 的记录吗？')) return;
+  DB.records=DB.records.filter(x=>x.id!==id);
+  save(); renderAll(); toast('已删除 '+r.date+' 的记录');
+}
+
+/* 编辑弹窗 */
+let editId=null;
+function openEdit(id){
+  const r=DB.records.find(x=>x.id===id); if(!r)return;
+  editId=id;
+  $('edit-date').value=r.date; $('edit-laps').value=r.laps; $('edit-time').value=r.time;
+  $('edit-style').value=r.style||''; $('edit-note').value=r.note||'';
+  $('edit-mask').classList.add('show');
+}
+function closeEdit(){ $('edit-mask').classList.remove('show'); editId=null; }
+$('edit-cancel').addEventListener('click',closeEdit);
+$('edit-mask').addEventListener('click',e=>{ if(e.target===$('edit-mask')) closeEdit(); });
+$('edit-save').addEventListener('click',()=>{
+  const id=editId; const r=DB.records.find(x=>x.id===id); if(!r)return;
+  const date=$('edit-date').value, laps=+$('edit-laps').value, time=+$('edit-time').value;
+  const style=$('edit-style').value, note=$('edit-note').value.trim();
+  if(!date||!laps||laps<1||!time||time<1){ toast('请填写有效的日期、圈数和时长'); return; }
+  r.date=date; r.laps=laps; r.time=time; r.style=style; r.note=note;
+  save(); renderAll(); closeEdit(); toast('已更新');
+});
+
+/* ---- 趋势 ---- */
+function renderTrend(){
+  const rec=DB.records;
+  const total=rec.length;
+  const totalDist=rec.reduce((a,r)=>a+dist(r.laps),0);
+  const totalMin=rec.reduce((a,r)=>a+r.time,0);
+  const avgD=total?Math.round(totalDist/total):0;
+  const avgT=total?Math.round(totalMin/total):0;
+  $('tr-total').innerHTML=total+'<small> 次</small>';
+  $('tr-total-dist').innerHTML=totalDist+'<small> m</small>';
+  $('tr-total-km').textContent='约 '+fmtKm(totalDist)+' 公里';
+  $('tr-total-time').innerHTML=totalMin+'<small> min</small>';
+  $('tr-total-h').textContent='约 '+(totalMin/60).toFixed(1)+' 小时';
+  $('tr-avg').innerHTML=avgD+'<small> m</small>';
+  $('tr-avg-time').textContent='平均每次 '+avgT+' 分钟';
+
+  // 最佳
+  let bestDist=null,bestDistR=null,bestPace=null,bestPaceR=null;
+  rec.forEach(r=>{
+    const d=dist(r.laps), p=pace(r.time,d);
+    if(!bestDist||d>bestDist){bestDist=d;bestDistR=r;}
+    if(!bestPace||(p>0&&p<bestPace)){bestPace=p;bestPaceR=r;}
+  });
+  $('tr-best-dist').textContent=bestDist? bestDist+' m':'—';
+  $('tr-best-dist-date').textContent=bestDistR? '于 '+bestDistR.date+'（'+bestDistR.laps+' 圈）':'暂无记录';
+  $('tr-best-pace').textContent=bestPaceR? fmtPace(bestPaceR.time,bestDist):'—';
+  $('tr-best-pace').textContent=bestPaceR? fmtPace(bestPaceR.time,dist(bestPaceR.laps)):'—';
+
+  // 月统计
+  const mMap={};
+  rec.forEach(r=>{ const k=r.date.slice(0,7); mMap[k]=(mMap[k]||0)+1; });
+  let bestMonth=null,bestMCount=0;
+  Object.entries(mMap).forEach(([k,c])=>{ if(c>bestMCount){bestMCount=c;bestMonth=k;} });
+  $('tr-best-month').textContent=bestMonth? bestMonth+'（'+bestMCount+' 次）':'—';
+  $('tr-best-month-sub').textContent=bestMonth? '打卡最勤的一个月':'暂无记录';
+
+  render14DayChart();
+  render4WChart();
+  render3MonthChart();
+}
+/* 近14天每日打卡热力图 */
+function render14DayChart(){
+  const box=$('cal-14day'); box.innerHTML='';
+  const now=new Date();
+  const today=fmtDate(now);
+  const wd=['日','一','二','三','四','五','六'];
+  let maxDist=0;
+  const days=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date(now); d.setDate(now.getDate()-i);
+    const s=fmtDate(d);
+    const rec=recordsOfDay(s);
+    days.push({d,s,rec,dist:rec.dist,cnt:rec.laps>0?1:0});
+    if(rec.dist>maxDist) maxDist=rec.dist;
+  }
+  // 统计总次数
+  let totalCnt=0;
+  days.forEach(item=>{ if(item.dist>0) totalCnt++; });
+  const hint14=$('hint-14day');
+  if(hint14) hint14.textContent='共打卡 '+totalCnt+' 次 · 颜色越深游得越多，点击可看明细';
+  days.forEach(item=>{
+    const cell=document.createElement('div'); cell.className='heat-cell'+(item.dist>0?' has':'');
+    if(item.dist>0){
+      const ratio=maxDist>0?item.dist/maxDist:1;
+      const opacity=0.35+0.65*ratio;
+      cell.style.background='rgba(14,165,233,'+opacity.toFixed(2)+')';
+    }
+    let html='<span class="heat-label">'+(item.d.getMonth()+1)+'/'+item.d.getDate()+'</span>';
+    html+='<span class="heat-val">'+(item.dist>0?(item.dist>=1000?(item.dist/1000).toFixed(1)+'k':item.dist)+'m':'—')+'</span>';
+    html+='<span style="font-size:10px;opacity:.75">周'+wd[item.d.getDay()]+'</span>';
+    cell.innerHTML=html;
+    cell.title=item.s+(item.dist>0?' · '+item.dist+'米':' · 未打卡');
+    if(item.s===today) cell.style.outline='2px solid var(--deep)';
+    cell.addEventListener('click',()=>showDayDetail(item.s));
+    box.appendChild(cell);
+  });
+}
+
+/* 近4周每周打卡热力图 */
+function render4WChart(){
+  const box=$('cal-4w'); box.innerHTML='';
+  const now=new Date(); const sw=startOfWeek(now);
+  let maxCnt=0;
+  const weeks=[];
+  for(let i=3;i>=0;i--){
+    const ws=new Date(sw); ws.setDate(sw.getDate()-i*7);
+    const we=new Date(ws); we.setDate(ws.getDate()+6);
+    const recs=DB.records.filter(r=>{const d=parseDate(r.date);return d>=ws&&d<=we;});
+    const cnt=recs.length;
+    const wDist=recs.reduce((a,r)=>a+dist(r.laps),0);
+    weeks.push({ws,we,cnt,wDist,label:(ws.getMonth()+1)+'/'+ws.getDate()+'~'+(we.getMonth()+1)+'/'+we.getDate()});
+    if(cnt>maxCnt) maxCnt=cnt;
+  }
+  let totalCnt=weeks.reduce((a,w)=>a+w.cnt,0);
+  let totalDist=weeks.reduce((a,w)=>a+w.wDist,0);
+  const hint4w=$('hint-4w');
+  if(hint4w) hint4w.textContent='共打卡 '+totalCnt+' 次 · '+totalDist+'米 · 周一起算';
+  weeks.forEach(w=>{
+    const cell=document.createElement('div'); cell.className='heat-cell'+(w.cnt>0?' has':'');
+    if(w.cnt>0){
+      const ratio=maxCnt>0?w.cnt/maxCnt:1;
+      const opacity=0.35+0.65*ratio;
+      cell.style.background='rgba(14,165,233,'+opacity.toFixed(2)+')';
+    }
+    let html='<span class="heat-label">'+w.label+'</span>';
+    html+='<span class="heat-val">'+(w.cnt>0?w.cnt+'次':'—')+'</span>';
+    if(w.wDist>0) html+='<span style="font-size:10px;opacity:.8">'+(w.wDist>=1000?(w.wDist/1000).toFixed(1)+'k':w.wDist)+'m</span>';
+    cell.innerHTML=html;
+    cell.title=w.label+' · '+w.cnt+'次 · '+w.wDist+'米';
+    box.appendChild(cell);
+  });
+}
+
+/* 近3个月月度统计热力图 */
+function render3MonthChart(){
+  const box=$('cal-3month'); box.innerHTML='';
+  const now=new Date();
+  const curMonthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  let maxDist=0;
+  const months=[];
+  for(let i=2;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const v=recMonthDist(k);
+    const cnt=DB.records.filter(r=>r.date.startsWith(k)).length;
+    months.push({d,k,v,cnt});
+    if(v>maxDist) maxDist=v;
+  }
+  let totalCnt=months.reduce((a,m)=>a+m.cnt,0);
+  let totalDist=months.reduce((a,m)=>a+m.v,0);
+  const hint3m=$('hint-3month');
+  if(hint3m) hint3m.textContent='共打卡 '+totalCnt+' 次 · '+totalDist+'米 · 点击可跳转当月历史记录';
+  months.forEach(item=>{
+    const cell=document.createElement('div'); cell.className='heat-cell'+(item.v>0?' has':'');
+    if(item.v>0){
+      const ratio=maxDist>0?item.v/maxDist:1;
+      const opacity=0.35+0.65*ratio;
+      cell.style.background='rgba(14,165,233,'+opacity.toFixed(2)+')';
+    }
+    let html='<span class="heat-label">'+(item.d.getMonth()+1)+'月</span>';
+    html+='<span class="heat-val">'+(item.v>0?(item.v>=1000?(item.v/1000).toFixed(1)+'k':item.v)+'m':'—')+'</span>';
+    if(item.cnt>0) html+='<span style="font-size:10px;opacity:.8">'+item.cnt+'次</span>';
+    cell.innerHTML=html;
+    cell.title=item.k+' 共 '+item.v+'米 · '+item.cnt+'次';
+    if(item.k===curMonthKey) cell.style.outline='2px solid var(--deep)';
+    cell.addEventListener('click',()=>{ $('filter-month').value=item.k; switchPage('history'); });
+    box.appendChild(cell);
+  });
+}
+
+/* ---- 我的 ---- */
+function renderSettings(){
+  $('set-pool').value=DB.poolLength;
+  $('set-goal').value=DB.weeklyGoal;
+  $('set-goal-m').value=DB.monthlyGoal;
+}
+$('set-pool').addEventListener('change',e=>{ const v=+e.target.value; if(v>=10&&v<=100){DB.poolLength=v;save();toast('泳池长度已更新');renderAll();} });
+$('set-goal').addEventListener('change',e=>{ const v=+e.target.value; if(v>=1&&v<=14){DB.weeklyGoal=v;save();toast('每周目标已更新');renderAll();} });
+$('set-goal-m').addEventListener('change',e=>{ const v=+e.target.value; if(v>=1&&v<=31){DB.monthlyGoal=v;save();toast('每月目标已更新');renderAll();} });
+
+/* 导入导出 */
+$('btn-export').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='游泳打卡数据_'+todayStr()+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('已导出备份');
+});
+$('btn-import').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const obj=JSON.parse(fr.result);
+      if(!Array.isArray(obj.records)) throw new Error('bad');
+      if(!confirm('导入将替换当前全部数据，确定继续？')) return;
+      DB={records:obj.records,poolLength:obj.poolLength||25,weeklyGoal:obj.weeklyGoal||2,monthlyGoal:obj.monthlyGoal||8};
+      save(); renderAll(); toast('导入成功，共 '+DB.records.length+' 条');
+    }catch(err){ toast('导入失败：文件格式不正确'); }
+    e.target.value='';
+  };
+  fr.readAsText(f);
+});
+$('btn-clear').addEventListener('click',()=>{
+  if(!confirm('确定要清空全部打卡记录吗？此操作不可恢复！')) return;
+  DB.records=[]; save(); renderAll(); toast('已清空全部记录');
+});
+
+/* ---- 记录表单 ---- */
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ $('rec-laps').value=c.dataset.laps; updatePreview(); }));
+$('rec-laps').addEventListener('input',updatePreview);
+$('rec-time').addEventListener('input',updatePreview);
+function updatePreview(){
+  const laps=+$('rec-laps').value||0, time=+$('rec-time').value||0;
+  if(!laps&&!time){ $('rec-preview').textContent=''; return; }
+  const d=dist(laps);
+  let s='本次约 '+d+' 米';
+  if(time&&laps) s+='，配速约 '+fmtPace(time,d)+' /公里';
+  $('rec-preview').textContent=s;
+}
+$('btn-save').addEventListener('click',()=>{
+  const date=$('rec-date').value||todayStr();
+  const laps=+$('rec-laps').value, time=+$('rec-time').value;
+  if(!laps||laps<1){ toast('请填写圈数'); return; }
+  if(!time||time<1){ toast('请填写时长（分钟）'); return; }
+  const style=$('rec-style').value;
+  const note=$('rec-note').value.trim();
+  DB.records.push({id:uid(),date:date,laps:laps,time:time,style:style,note:note});
+  save();
+  toast('✅ 已记录 '+date+'：'+laps+' 圈 · '+dist(laps)+' 米 · '+time+' 分钟');
+  $('rec-laps').value='';$('rec-time').value='';$('rec-style').value='';$('rec-note').value='';
+  $('rec-date').value=todayStr();
+  $('rec-preview').textContent='';
+  switchPage('overview');
+});
+
+/* toast */
+let toastTimer;
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* 历史月份筛选 */
+$('filter-month').addEventListener('change',renderHistory);
+$('filter-clear').addEventListener('click',()=>{ $('filter-month').value=''; renderHistory(); });
+
+/* 初始化 */
+$('rec-date').value=todayStr();
+var _d=new Date();
+$('filter-month').value=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0');
+renderAll();
+
+/* 注册 Service Worker（离线缓存） */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>
