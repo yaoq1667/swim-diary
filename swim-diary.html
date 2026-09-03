@@ -51,7 +51,8 @@
   .panel h3{font-size:15px;color:var(--deep);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
   .panel h3 .hint{font-size:12px;font-weight:400;color:var(--muted)}
   /* ===== 记录表单 ===== */
-  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;align-items:start}
+  .field{min-width:0}
   .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
   .field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:15px;background:#fbfdfe;color:var(--text);outline:none;transition:.15s}
   .field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
@@ -92,11 +93,12 @@
   .cal-strip-cell .cal-no{font-size:11px;color:var(--muted);margin-top:3px}
   /* 热力图 */
   .heat-grid{display:flex;gap:8px;flex-wrap:wrap}
-  .heat-cell{width:62px;height:62px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.15s;border:1px solid var(--border);background:#f8fafc;font-size:12px;color:var(--muted)}
+  .heat-cell{width:70px;min-height:70px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.15s;border:1px solid var(--border);background:#f8fafc;font-size:12px;color:var(--muted);padding:4px 2px;text-align:center}
   .heat-cell:hover{transform:scale(1.08);border-color:var(--primary)}
   .heat-cell.has{color:#fff;border-color:transparent}
-  .heat-cell .heat-label{font-size:11px;font-weight:600}
-  .heat-cell .heat-val{font-size:11px;margin-top:2px}
+  .heat-cell .heat-label{font-size:10px;font-weight:600;line-height:1.2;word-break:break-all}
+  .heat-cell .heat-val{font-size:11px;margin-top:2px;line-height:1.2}
+  .heat-cell .heat-extra{font-size:9px;margin-top:1px;opacity:.85;line-height:1.2}
   .no-data{color:var(--muted);font-size:13px;text-align:center;padding:40px 0}
   /* ===== 历史表格 ===== */
   .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -147,13 +149,16 @@
     .card{padding:12px 14px}
     .card .value{font-size:22px}
     .panel{padding:14px 16px}
-    .form-grid{grid-template-columns:1fr 1fr;gap:10px}
+    .form-grid{grid-template-columns:1fr 1fr;gap:10px;align-items:start}
     .field input,.field select{font-size:16px;padding:10px 10px}
+    .field label{font-size:12px}
+    .chip{padding:4px 10px;font-size:12px}
     .table{font-size:12px}
     .table th,.table td{padding:6px 5px}
-    .heat-cell{width:48px;height:48px;font-size:11px}
-    .heat-cell .heat-label{font-size:10px}
+    .heat-cell{width:60px;min-height:60px;font-size:11px;padding:3px 2px}
+    .heat-cell .heat-label{font-size:9px}
     .heat-cell .heat-val{font-size:10px}
+    .heat-cell .heat-extra{font-size:8px}
     .cal-strip-cell{min-height:64px}
     .cal-cell{font-size:12px}
     .modal{width:94vw;padding:16px 18px}
