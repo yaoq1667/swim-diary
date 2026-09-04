@@ -1,6 +1,6 @@
 // 游泳打卡本 - Service Worker（离线缓存）
 // 策略：HTML 优先走网络（保证更新即时生效），断网时才用缓存
-var CACHE_NAME = 'swim-diary-v3';
+var CACHE_NAME = 'swim-diary-v4';
 var CACHE_FILES = [
   'swim-diary.html',
   'manifest.json'

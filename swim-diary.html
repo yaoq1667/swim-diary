@@ -276,11 +276,6 @@
         <div class="heat-grid" id="cal-3month"></div>
       </div>
       <div class="panel">
-        <h3>1000 米耗时趋势 <span class="hint" id="hint-1k">每次游满1000米的用时变化</span></h3>
-        <div id="chart-1k" style="position:relative;height:180px"></div>
-        <div class="no-data" id="chart-1k-empty" style="display:none">需要单次游满 1000 米（40圈）以上才会记录到趋势点</div>
-      </div>
-      <div class="panel">
         <h3>最佳状态</h3>
         <div class="cards" style="margin-bottom:0">
           <div class="card"><div class="label">单次最长距离</div><div class="value" id="tr-best-dist">-</div><div class="sub" id="tr-best-dist-date"></div></div>
@@ -683,75 +678,8 @@ function renderTrend(){
   render14DayChart();
   render4WChart();
   render3MonthChart();
-  render1KChart();
 }
 
-/* 1000米耗时趋势图 */
-function render1KChart(){
-  const box=$('chart-1k');
-  if(!box){ return; }
-  const empty=$('chart-1k-empty');
-  box.innerHTML='';
-  // 找出距离>=1000米的记录，计算每条记录的"等效1000米耗时"
-  const points=DB.records
-    .filter(r=>dist(r.laps)>=1000)
-    .map(r=>{
-      const d=dist(r.laps);
-      const time1k=r.time/d*1000; // 等效1000米耗时
-      return {date:r.date, time1k:Math.round(time1k*10)/10, laps:r.laps, dist:d, time:r.time};
-    })
-    .sort((a,b)=>a.date.localeCompare(b.date))
-    .slice(-15); // 最多展示最近15条
-  if(points.length===0){
-    if(empty){ empty.style.display='block'; }
-    box.style.display='none';
-    return;
-  }
-  if(empty){ empty.style.display='none'; }
-  box.style.display='block';
-  let minT=Math.min(...points.map(p=>p.time1k));
-  let maxT=Math.max(...points.map(p=>p.time1k));
-  if(maxT===minT) maxT=minT+1;
-  const range=maxT-minT;
-  // 更新hint
-  const hint=$('hint-1k');
-  if(hint){
-    const best=Math.min(...points.map(p=>p.time1k));
-    const latest=points[points.length-1].time1k;
-    let arrow=latest<best? '↓ 新纪录！' : (latest===best? '持平最佳' : '');
-    hint.textContent='最佳 '+best+' 分钟 · 最近 '+latest+' 分钟 '+arrow;
-  }
-  // 构建柱状图
-  const wrap=document.createElement('div');
-  wrap.className='chart-bar-wrap';
-  points.forEach((p,i)=>{
-    const col=document.createElement('div');
-    col.className='chart-bar-col';
-    // 高度比例：耗时越短柱子越高（表现越好），反比映射
-    const ratio=(maxT-p.time1k)/range; // 0=最差 1=最好
-    const h=20+ratio*80; // 20%~100%
-    const bar=document.createElement('div');
-    bar.className='chart-bar';
-    bar.style.height=(h*1.4)+'px'; // 20%*140px ~ 100%*140px → 28px~140px
-    // 颜色：最佳绿色，最新蓝色，其他浅蓝
-    if(p.time1k===minT) bar.style.background='linear-gradient(180deg,#10b981,#059669)';
-    else if(i===points.length-1) bar.style.background='linear-gradient(180deg,#0ea5e9,#0284c7)';
-    else bar.style.background='linear-gradient(180deg,#7dd3fc,#38bdf8)';
-    const val=document.createElement('div');
-    val.className='chart-bar-val';
-    val.textContent=p.time1k+'min';
-    const label=document.createElement('div');
-    label.className='chart-bar-label';
-    const dp=p.date.split('-');
-    label.textContent=+dp[1]+'/'+(+dp[2]);
-    bar.title=p.date+' · '+p.laps+'圈 · '+p.dist+'米 · '+p.time+'分钟 → 等效1000米 '+p.time1k+'分钟';
-    col.appendChild(val);
-    col.appendChild(bar);
-    col.appendChild(label);
-    wrap.appendChild(col);
-  });
-  box.appendChild(wrap);
-}
 /* 近14天每日打卡热力图 */
 function render14DayChart(){
   const box=$('cal-14day'); box.innerHTML='';
