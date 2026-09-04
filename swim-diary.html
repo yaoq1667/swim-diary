@@ -72,7 +72,7 @@
   .form-actions .btn{width:100%}
   .form-2col{grid-template-columns:1fr 1fr}
   .preview-box{padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px;background:#f1f5f9;color:var(--muted);min-height:42px;display:flex;align-items:center}
-  .chart-bar-wrap{display:flex;align-items:flex-end;gap:6px;height:140px;padding:0 4px;border-bottom:2px solid var(--border)}
+  .chart-bar-wrap{display:flex;align-items:flex-end;gap:6px;height:140px;padding:0 4px;border-bottom:2px solid var(--border);overflow:hidden}
   .chart-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;min-width:0}
   .chart-bar{width:80%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#0ea5e9,#0284c7);transition:.3s;cursor:pointer;min-height:3px}
   .chart-bar:hover{filter:brightness(1.1)}
@@ -689,6 +689,7 @@ function renderTrend(){
 /* 1000米耗时趋势图 */
 function render1KChart(){
   const box=$('chart-1k');
+  if(!box){ return; }
   const empty=$('chart-1k-empty');
   box.innerHTML='';
   // 找出距离>=1000米的记录，计算每条记录的"等效1000米耗时"
@@ -702,11 +703,11 @@ function render1KChart(){
     .sort((a,b)=>a.date.localeCompare(b.date))
     .slice(-15); // 最多展示最近15条
   if(points.length===0){
-    empty.style.display='block';
+    if(empty){ empty.style.display='block'; }
     box.style.display='none';
     return;
   }
-  empty.style.display='none';
+  if(empty){ empty.style.display='none'; }
   box.style.display='block';
   let minT=Math.min(...points.map(p=>p.time1k));
   let maxT=Math.max(...points.map(p=>p.time1k));
@@ -731,7 +732,7 @@ function render1KChart(){
     const h=20+ratio*80; // 20%~100%
     const bar=document.createElement('div');
     bar.className='chart-bar';
-    bar.style.height=h+'%';
+    bar.style.height=(h*1.4)+'px'; // 20%*140px ~ 100%*140px → 28px~140px
     // 颜色：最佳绿色，最新蓝色，其他浅蓝
     if(p.time1k===minT) bar.style.background='linear-gradient(180deg,#10b981,#059669)';
     else if(i===points.length-1) bar.style.background='linear-gradient(180deg,#0ea5e9,#0284c7)';
